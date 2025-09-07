@@ -1,0 +1,21 @@
+width: 20
+height: 20
+depot: [0, 0]
+hospitals:
+  - [19, 0]
+  - [10, 19]
+buildings:
+  - [4,4]
+  - [5,4]
+  - [6,4]
+  - [4,5]
+  - [4,6]
+initial_fires:
+  - [6, 6]
+  - [7, 6]
+  - [6, 7]
+rubble:
+  - [9, 9]
+  - [9, 10]
+  - [10, 9]
+survivors: 25
