@@ -2,6 +2,7 @@ import argparse, os, json, yaml
 from pathlib import Path
 from env.world import CrisisModel
 from reasoning.planner import make_plan
+from utils.jsonl_logger import write_tick_conversation  # added for per-tick JSONL
 
 def load_config(path):
     with open(path, "r") as f:
@@ -21,14 +22,44 @@ def run_episode(map_path, seed=42, ticks=200, provider="mock", strategy="react_r
     logf = open(log_path, "w", buffering=1, encoding="utf-8")
 
     transcript = []
+
+    # ---- run_id for JSONL logs (added) ----
+    run_id = f"{Path(map_path).stem}_{provider}_{strategy}_seed{seed}"
+
     for t in range(ticks):
         state = model.summarize_state()
-        plan = make_plan(state, strategy=strategy, scratchpad="\\n".join(transcript[-10:]))
+        plan = make_plan(state, strategy=strategy, scratchpad="\n".join(transcript[-10:]))
         cmds = plan.get("commands", [])
         model.set_plan(cmds)
 
-        logf.write(f"=== t={t} ===\\n")
-        logf.write(json.dumps({"context": state, "plan": plan})[:2000] + "\\n")
+        # ---- Sprint-1 per-tick JSONL logging (added) ----
+        # Build conversation payloads and write logs/strategy=<name>/run=<id>/tickNNN.jsonl
+        try:
+            conv_lines = [
+                {"role": "system", "content": f"strategy={strategy}"},
+                {"role": "user", "content": json.dumps(state, ensure_ascii=False)[:4000]},
+                {"role": "assistant", "content": "FINAL_JSON: " + json.dumps(plan, ensure_ascii=False)},
+            ]
+            write_tick_conversation(
+                base_dir="logs",
+                strategy=strategy,
+                run_id=run_id,
+                tick=t,
+                conversation_lines=conv_lines
+            )
+        except Exception:
+            # non-fatal: keep the sim running even if logging fails
+            pass
+
+        # Track invalid_json count if planner returned empty/malformed commands (added)
+        try:
+            model.invalid_json = getattr(model, "invalid_json", 0) + (0 if (isinstance(plan, dict) and plan.get("commands")) else 1)
+        except Exception:
+            pass
+        # -----------------------------------------------
+
+        logf.write(f"=== t={t} ===\n")
+        logf.write(json.dumps({"context": state, "plan": plan})[:2000] + "\n")
         transcript.append(f"t={t}: plan={plan}")
 
         model.step()
