@@ -1,0 +1,22 @@
+# configs/map_medium.yaml
+width: 18
+height: 18
+depot: [5, 5]
+hospitals:
+  - [12, 2]
+  - [13, 13]
+buildings:
+  - [4,4]
+  - [5,6]
+  - [6,5]
+  - [10,10]
+  - [11,10]
+  - [12,10]
+initial_fires:
+  - [8, 3]
+  - [10, 12]
+rubble:
+  - [7, 7]
+  - [7, 8]
+  - [8, 7]
+survivors: 18

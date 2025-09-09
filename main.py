@@ -2,6 +2,7 @@ import argparse, os, json, yaml
 from pathlib import Path
 from env.world import CrisisModel
 from reasoning.planner import make_plan
+from utils.jsonl_logger import write_tick_conversation
 
 def load_config(path):
     with open(path, "r") as f:
